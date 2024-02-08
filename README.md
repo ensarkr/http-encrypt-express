@@ -32,12 +32,13 @@ Sends encrypted responses to clients.
 
 > API client roles = G (guest), U (user)  
 > Encrypted route ✔️, Not-encrypted ❌
-> If error occurs while decrypting requests, error responses mostly not-encrypted.
+
+ If error occurs while decrypting requests, error responses mostly not-encrypted.
 
 - ❌ handshake - create ECDH shared private key between client and server
   >
-- ✔️ auth/signUp - G - sign up
-- ✔️ auth/signIn - G - sign in
+- ✔️ auth/signUp - G - sign up and get session id
+- ✔️ auth/signIn - G - sign in and get session id
 - ✔️ auth/verifySession - U - verify session id
   >
 - ✔️ data/randomMovies - U - get 10 random movies
@@ -76,4 +77,51 @@ $ npm test ./src/api/<route to the test file>
 - PostgreSQL
 
 ## Encryption Process
-TBA
+
+#### Handshake
+
+`Client:`
+
+1. Creates ECDH key pair and sends its public key to server.
+
+`Server:`
+
+1. Creates ECDH key pair.
+2. Using clients public key derives shared private key.
+3. Randomly generates client id.
+4. Saves shared private key to `KeyCache` using client id as a key.
+5. Sends servers public key and client id as response.
+
+`Client:`
+
+1. Using servers public key derives shared private key.
+2. Keeps this in react context named `ECDHContext`.
+
+Now they both have shared private key that middle man cannot figure out what it is.
+Middle man can see public keys or client id but these does not give any power to MM.
+
+#### Encryption
+
+`Client:`
+
+1. Uses client id in `ECDHContext` as `X-Client-ID` header.
+2. Encrypts request body using shared private key inside `ECDHContext`.
+3. If needed it also encrypts session id and puts in `Authorization` header.
+
+`Server:`
+
+1. Checks if `X-Client-ID` header exists.
+2. Gets shared private key from `KeyCache` using client id as a key.
+3. Decrypts request body using shared private key.
+4. If needed it also decrypts `Authorization` header and verifies session id.
+5. Encrypts its response using shared private key.
+6. Sends the response.
+
+`Client:`
+
+1. Decrypts request body using shared private key inside `ECDHContext`.
+
+## Resources
+
+- [ECDH video](https://www.youtube.com/watch?v=gAtBM06xwaw)
+- [node crypto docs](https://nodejs.org/api/crypto.html)
