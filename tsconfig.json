@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "strict": true,
+    "outDir": "./build",
+    "esModuleInterop": true,
+    "paths": {
+      "stream": ["./node_modules/stream-browserify"]
+    }
+  },
+  "include": ["./src"],
+  "exclude": ["./src/**/*.test.ts"]
+}
